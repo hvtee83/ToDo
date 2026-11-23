@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-A deliberately simple to-do tracker: plain HTML/CSS/vanilla JS, no frameworks, no build step, no tests, no package manager. Keep it that way. Not a git repository.
+A deliberately simple to-do tracker: plain HTML/CSS/vanilla JS, no frameworks, no build step, no tests, no package manager. Keep it that way. A git repository on branch `main`, with remote `origin` at https://github.com/hvtee83/ToDo (private); `git` and `gh` are set up for pushing.
 
 To run it, open `index.html` in a browser (double-click, or serve the folder with any static server). To verify UI changes, load it in a browser and exercise it by hand or via scripted DOM interaction.
 
