@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>To-Do</title>
+<style>
+  :root {
+    color-scheme: light;
+    --accent: #4f46e5; --accent-dark: #4338ca; --border: #d9deea; --muted: #6b7280;
+    --bg: #f4f6fb; --text: #1f2937; --card: #fff; --input-bg: #fff; --shadow: rgba(30, 41, 90, .08);
+    --row-border: #dde1ec; --chip-bg: #e8eefc; --chip-text: #223366; --hover: #eef0f6; --hover-del: #fde8e8;
+    --switch-off: #cbd2e0; --danger: #cc0000; --icon: #555; --soft: #888; --sub: #444; --edit-border: #aaa;
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --accent: #7c83ff; --accent-dark: #6a71f0; --border: #3a4258; --muted: #9aa3b8;
+    --bg: #0f1320; --text: #e6e9f2; --card: #1a2033; --input-bg: #121829; --shadow: rgba(0, 0, 0, .4);
+    --row-border: #2a3248; --chip-bg: #27315a; --chip-text: #c9d1ff; --hover: #252d44; --hover-del: #3d2230;
+    --switch-off: #444d66; --danger: #ff6b6b; --icon: #aab2c8; --soft: #7d869b; --sub: #b8c0d4; --edit-border: #55607a;
+  }
+  body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; max-width: 520px; margin: 2rem auto; padding: 0 1rem; background: var(--bg); color: var(--text); transition: background .2s, color .2s; }
+  header { position: relative; }
+  h1 { text-align: center; font-weight: 800; letter-spacing: -.02em; }
+  .theme { position: absolute; top: 50%; right: 0; transform: translateY(-50%); display: flex; padding: 3px; gap: 2px; background: var(--card); border: 1px solid var(--border); border-radius: 999px; }
+  .theme button { display: flex; align-items: center; gap: .3rem; border: none; background: none; color: var(--muted); padding: .4rem; border-radius: 999px; }
+  .theme button[aria-pressed="true"] { background: var(--accent); color: #fff; }  input, button { font-size: 1rem; font-family: inherit; }
+  button { padding: .5rem .8rem; cursor: pointer; }
+
+  #add-form { background: var(--card); border-radius: 16px; padding: 1rem; box-shadow: 0 4px 16px var(--shadow); display: grid; gap: .9rem; }
+  #add-form .row { display: flex; gap: .5rem; }
+  #add-form input:not([type=checkbox]) { width: 100%; box-sizing: border-box; padding: .65rem .8rem; border: 1.5px solid var(--border); border-radius: 10px; background: var(--input-bg); color: inherit; transition: border-color .15s, box-shadow .15s; }
+  #add-form input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79, 70, 229, .18); }
+  #add-form select { width: 100%; box-sizing: border-box; padding: .65rem .8rem; border: 1.5px solid var(--border); border-radius: 10px; background: var(--input-bg); color: inherit; font-weight: 400; text-transform: none; letter-spacing: normal; cursor: pointer; transition: border-color .15s, box-shadow .15s; }
+  #add-form select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79, 70, 229, .18); }
+  #new-task { flex: 1; min-width: 0; }
+  .add { background: var(--accent); color: #fff; border: none; border-radius: 10px; padding: 0 1.3rem; font-weight: 600; transition: background .15s, transform .05s; }
+  .add:hover { background: var(--accent-dark); }
+  .add:active { transform: scale(.97); }
+  #add-form .opts { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
+  #add-form .opts label { display: grid; gap: .25rem; font-size: .75rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; min-width: 0; }
+  #add-form .opts input { text-transform: none; letter-spacing: normal; font-weight: 400; }
+  @media (max-width: 420px) { #add-form .opts { grid-template-columns: 1fr; } }
+
+  .sort { display: flex; align-items: center; gap: .6rem; margin: 1rem .2rem .2rem; font-size: .9rem; color: var(--sub); cursor: pointer; user-select: none; }
+  .sort input { appearance: none; -webkit-appearance: none; flex: none; width: 2.5rem; height: 1.4rem; margin: 0; border-radius: 1rem; background: var(--switch-off); position: relative; cursor: pointer; transition: background .2s; }
+  .sort input::after { content: ""; position: absolute; top: 3px; left: 3px; width: calc(1.4rem - 6px); height: calc(1.4rem - 6px); border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.3); transition: transform .2s; }
+  .sort input:checked { background: var(--accent); }
+  .sort input:checked::after { transform: translateX(1.1rem); }
+  .sort input:focus-visible { outline: 3px solid rgba(79, 70, 229, .35); outline-offset: 2px; }
+  ul { list-style: none; padding: 0; }
+  li { display: flex; align-items: center; gap: .6rem; padding: .5rem 0; border-bottom: 1px solid var(--row-border); }
+  li > input[type=checkbox] { flex: none; width: 1.2rem; height: 1.2rem; accent-color: var(--accent); cursor: pointer; }
+  .main { flex: 1; min-width: 0; }
+  .text { word-break: break-word; }
+  .meta { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .2rem; font-size: .8rem; color: var(--muted); }
+  .cat { background: var(--chip-bg); color: var(--chip-text); padding: 0 .5rem; border-radius: 1rem; }
+  .overdue { color: var(--danger); font-weight: 600; }
+  li.done .main { text-decoration: line-through; opacity: .5; }
+  li button { display: flex; align-items: center; border: none; background: none; color: var(--danger); padding: .4rem; border-radius: 8px; }
+  li button:hover { background: var(--hover); }
+  li button.edit { color: var(--icon); }
+  li button.del:hover { background: var(--hover-del); }
+  .editor { flex: 1; display: flex; flex-wrap: wrap; gap: .4rem; }
+  .editor input, .editor select { padding: .3rem; min-width: 0; font-size: 1rem; background: var(--input-bg); color: var(--text); border: 1px solid var(--border); border-radius: 6px; }
+  .editor .e-text { flex: 1 1 100%; }
+  .editor .e-cat { flex: 1; }
+  li .editor button { border: 1px solid var(--edit-border); padding: .3rem .7rem; color: var(--text); }
+</style>
+</head>
+<body>
+  <header>
+    <h1>To-Do</h1>
+    <div class="theme" role="group" aria-label="Color theme">
+      <button type="button" data-theme-btn="light" aria-pressed="false" aria-label="Light mode" title="Light mode">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      </button>
+      <button type="button" data-theme-btn="dark" aria-pressed="false" aria-label="Dark mode" title="Dark mode">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      </button>
+    </div>
+  </header>
+  <form id="add-form">
+    <div class="row">
+      <input id="new-task" placeholder="What needs to be done?" autocomplete="off" autofocus>
+      <button type="submit" class="add">Add</button>
+    </div>
+    <div class="opts">
+      <label>Category
+        <select id="new-cat">
+          <option selected>Work</option>
+          <option>Personal</option>
+          <option>Others</option>
+        </select>
+      </label>
+      <label>Due date <input id="new-due" type="date"></label>
+    </div>
+  </form>
+  <label class="sort"><input type="checkbox" id="sort-due"> Sort by due date <span style="color:var(--soft)">(no date last)</span></label>
+  <ul id="list"></ul>
+
+<script>
+  const KEY = 'todo.tasks';
+  const list = document.getElementById('list');
+  const input = document.getElementById('new-task');
+  const catInput = document.getElementById('new-cat');
+  const dueInput = document.getElementById('new-due');
+  const CATEGORIES = ['Work', 'Personal', 'Others'];
+
+  // Theme: saved choice, else follow the system setting
+  const themeBtns = document.querySelectorAll('[data-theme-btn]');
+  function setTheme(mode, persist) {
+    document.documentElement.dataset.theme = mode;
+    themeBtns.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.themeBtn === mode)));
+    if (persist) { try { localStorage.setItem('todo.theme', mode); } catch {} }
+  }
+  let savedTheme = null;
+  try { savedTheme = localStorage.getItem('todo.theme'); } catch {}
+  setTheme(savedTheme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'), false);
+  themeBtns.forEach(b => b.addEventListener('click', () => setTheme(b.dataset.themeBtn, true)));
+  const svg = path => '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + path + '</svg>';
+  const ICON_EDIT = svg('<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>');
+  const ICON_DEL = svg('<path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/>');
+
+  function load() {
+    try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch { return []; }
+  }
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(tasks)); } catch {}
+  }
+
+  let tasks = load();
+
+  const sortBox = document.getElementById('sort-due');
+  try { sortBox.checked = localStorage.getItem('todo.sortDue') === '1'; } catch {}
+  sortBox.addEventListener('change', () => {
+    try { localStorage.setItem('todo.sortDue', sortBox.checked ? '1' : '0'); } catch {}
+    render();
+  });
+
+  function todayStr() {
+    const d = new Date();
+    return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-');
+  }
+  function fmtDate(s) {
+    const [y, m, d] = s.split('-').map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+  }
+  function el(tag, props = {}) { return Object.assign(document.createElement(tag), props); }
+
+  function render() {
+    list.innerHTML = '';
+    const today = todayStr();
+    // completed tasks always sink to the bottom; the sort toggle orders within each group
+    const dueKey = t => t.due || '9999-99-99';
+    const shown = [...tasks].sort((a, b) =>
+      (a.done - b.done) || (sortBox.checked ? dueKey(a).localeCompare(dueKey(b)) : 0));
+    for (const t of shown) {
+      const li = el('li');
+      li.dataset.id = t.id;
+      if (t.done) li.className = 'done';
+
+      const main = el('div', { className: 'main' });
+      main.append(el('div', { className: 'text', textContent: t.text }));
+      if (t.category || t.due) {
+        const meta = el('div', { className: 'meta' });
+        if (t.category) meta.append(el('span', { className: 'cat', textContent: t.category }));
+        if (t.due) {
+          const late = !t.done && t.due < today;
+          meta.append(el('span', {
+            className: late ? 'due overdue' : 'due',
+            textContent: (late ? 'Overdue: ' : 'Due ') + fmtDate(t.due)
+          }));
+        }
+        main.append(meta);
+      }
+
+      li.append(
+        el('input', { type: 'checkbox', checked: t.done }),
+        main,
+        el('button', { className: 'edit', innerHTML: ICON_EDIT, title: 'Edit' }),
+        el('button', { className: 'del', innerHTML: ICON_DEL, title: 'Delete' })
+      );
+      list.append(li);
+    }
+  }
+
+  document.getElementById('add-form').addEventListener('submit', e => {
+    e.preventDefault();
+    const text = input.value.trim();
+    if (!text) return;
+    const id = Math.max(0, ...tasks.map(t => t.id)) + 1;
+    tasks.push({ id, text, category: catInput.value.trim(), due: dueInput.value, done: false });
+    input.value = '';
+    catInput.value = CATEGORIES[0];
+    dueInput.value = '';
+    save(); render();
+  });
+
+  list.addEventListener('change', e => {
+    const id = Number(e.target.closest('li').dataset.id);
+    tasks.find(t => t.id === id).done = e.target.checked;
+    save(); render();
+  });
+
+  function startEdit(li) {
+    const t = tasks.find(t => t.id === Number(li.dataset.id));
+    const eText = el('input', { className: 'e-text', value: t.text, placeholder: 'Task' });
+    const eCat = el('select', { className: 'e-cat' });
+    // keep any older custom category so editing doesn't silently drop it
+    const options = [...CATEGORIES];
+    if (t.category && !options.includes(t.category)) options.push(t.category);
+    for (const c of options) eCat.append(el('option', { value: c, textContent: c }));
+    eCat.value = t.category || CATEGORIES[0];
+    const eDue = el('input', { className: 'e-due', type: 'date', value: t.due || '' });
+    const editor = el('div', { className: 'editor' });
+    editor.append(eText, eCat, eDue,
+      el('button', { className: 'save', textContent: 'Save' }),
+      el('button', { className: 'cancel', textContent: 'Cancel' }));
+    li.replaceChildren(editor);
+    eText.focus();
+    eText.select();
+
+    function finish(commit) {
+      const text = eText.value.trim();
+      if (commit && text) {
+        t.text = text;
+        t.category = eCat.value.trim();
+        t.due = eDue.value;
+      }
+      save(); render();
+    }
+    editor.addEventListener('keydown', e => {
+      if (e.key === 'Enter') finish(true);
+      else if (e.key === 'Escape') finish(false);
+    });
+    editor.finish = finish;
+  }
+
+  list.addEventListener('click', e => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    const li = btn.closest('li');
+    const cls = btn.classList;
+    if (cls.contains('edit')) return startEdit(li);
+    if (cls.contains('save')) return li.querySelector('.editor').finish(true);
+    if (cls.contains('cancel')) return li.querySelector('.editor').finish(false);
+    const id = Number(li.dataset.id);
+    tasks = tasks.filter(t => t.id !== id);
+    save(); render();
+  });
+
+  list.addEventListener('dblclick', e => {
+    if (e.target.classList.contains('text')) startEdit(e.target.closest('li'));
+  });
+
+  render();
+</script>
+</body>
+</html>
